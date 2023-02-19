@@ -1,0 +1,57 @@
+version: '3'
+
+networks:
+  network-rotten:
+    driver: bridge
+    name: network-rotten
+
+volumes:
+  volume-rotten:
+    name: volume-rotten
+
+services:
+  mongo:
+    image: mongo:4.4.3
+    container_name: mongo
+    networks:
+      - network-rotten
+    volumes:
+      - volume-rotten:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${PASSWORD}
+
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    networks:
+      - network-rotten
+    depends_on:
+      - mongo
+    ports:
+      - 8081:8081
+    restart: always
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${USER}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${PASSWORD}
+      ME_CONFIG_MONGODB_URL: mongodb://${USER}:${USER}@mongo:27017/
+
+  api:
+    container_name: api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - network-rotten
+    ports:
+      - 8080:5000
+    restart: always
+    environment:
+      MONGODB_DB: ${DB}
+      MONGODB_HOST: mongo
+      MONGODB_PORT: '27017'
+      MONGODB_USERNAME: ${USER}
+      MONGODB_PASSWORD: ${PASSWORD}
+
+
+
